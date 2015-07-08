@@ -9,6 +9,31 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;
 
+(define node% 
+  (class object%
+    (init b)               
+  
+    (define board b)
+    (define minmax -1)
+    (define children (list node%)) 
+    
+    
+    (define/public (get-board)
+    board)
+    
+    (define/public (get-minmax)
+    minmax)
+    
+    (define/public (set-board newboard)
+    (set! board newboard))
+    
+    (define/public (set-minmax value)
+    (set! minmax value))
+     
+    (super-new)))
+
+;(define charlie (new node% (b 10)))
+
 (define gameboard '())
 (define turn 0)
 
@@ -29,56 +54,38 @@
           ((= turn 0)
            1))))
 
-; Uses min max alg to find best move
-; Explores all possible routes of gameflow,
-; once it finds a move that can lead to a winning move
-; it will take it. 
-;
-; Keeps track of who wins at a leaf by attaching that player
-; to the gameboard set up that got the algorithm to that leaf.
-; This why the algorithm can keep track of what moves lead where.
-;
-; Returns a gameboard with the car set to what player will
-; win in the move. This will need to be removed to set the
-; gameboard to the computers move
-;
-(define make-move
-  (lambda (gameboard me turn)
-    (define winning-move '())
-    (define another-move gameboard)
-    (define test-board1 (remove-duplicates gameboard))
-    (define test-board2 gameboard)
-    (define moves '())
-    (define cant-make-move #t) ;used for base case of recurison
+
+(define build-tree
+  (lambda (game)
+  ;set root to node with gameboard = size
+    (define root (new node% (b (list game))))
+    (define tree (get-children root))
+    tree))
     
-    (for ((i test-board1))
-          (cond ((> i 2)
-                 (set! cant-make-move #f)
-                 ;set of moves that can be made with i
-                 (set! moves (range 1 (ceiling (/ i 2)) )) 
-                 (for ((j moves))
-                       ;perform hypothetical move and see where it leads.
-                       (set! test-board2 gameboard)
-                       (set! test-board2 (remove i test-board2))
-                       (set! test-board2 (append test-board2 (list j (- i j))))
-                       (cond ((null? winning-move)
-                              (set! winning-move (append (list turn) test-board2))))
-                       (set! another-move (make-move test-board2 me (change-turn turn)))
-                   
-                       ;applies min/max logic to determin which move is a winning move
-                       (cond ((= turn 1)
-                              (cond ((> (car another-move) (car winning-move))
-                                     (set! winning-move (append (list turn) test-board2)))))
-                             ((= turn 0)
-                              (cond ((< (car another-move) (car winning-move))
-                                     (set! winning-move (append (list turn) test-board2))))))))))
-    ;base case: end of a hypothetical game, 
-    ;see who won and what the game looked like and return the 
-    ;winner and gameboard with the winner as the car of the board
-    (cond (cant-make-move 
-           (append (list (change-turn turn)) gameboard)) ;return winner appended to gameboard
-          (else
-           winning-move))))
+(define get-children
+  (lambda (parent)
+    
+    (define test-board (remove-duplicates (send parent get-board)))
+    (define children '())
+    (define has-children #f)
+    
+    (for ((i test-board))
+      (cond ((> i 2) ;this pile can be split to make new gameboards (nodes)
+             (set! has-children #t)
+             (define moves (range 1 (ceiling (/ i 2)) )) 
+             (for ((j moves))
+               (define child (new node% (b (send parent get-board))))
+               ;perform move on test nodes.
+               (send child set-board (remove i (send child get-board)))
+               (send child set-board (append (send child get-board) (list j (- i j)) ))  
+
+               (set! child (get-children child))
+               (set! children (append (list child) children))))))
+    
+    (cond(has-children
+          (set! parent (append (list parent) (list children)))))
+    parent))
+
 
 ;sets up the gameboard 
 (define set-up
@@ -121,7 +128,7 @@
         (cond ((= turn 0)
                (begin
                (displayln "computer turn")
-               (set! gameboard (make-move gameboard turn turn))
+               ;(set! gameboard (make-move gameboard turn turn))
                (set! gameboard (remove (car gameboard) gameboard))
                ))
               ((= turn 1)
@@ -133,4 +140,5 @@
       (else
        (displayln "Player Wins!")))))
 
-(Nim 7)
+;(Nim 7)
+(displayln (build-tree 3))
