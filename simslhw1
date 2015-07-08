@@ -15,7 +15,7 @@
   
     (define board b)
     (define minmax -1)
-    (define children (list node%)) 
+    (define children '()) 
     
     
     (define/public (get-board)
@@ -60,6 +60,31 @@
           ((= turn 0)
            1))))
 
+(define minimaxDFS
+  (lambda (node turn)
+
+    (define leaf #t)
+    (define min-value 2)
+    (define max-value -2)
+    
+    (for ((child (send node get-children)))
+      (set! leaf #f)
+      (minimaxDFS child (change-turn turn)))
+    
+    (cond (leaf
+          (cond ((= turn 1) ;max wins at this leaf
+                 (send node set-minmax 0))
+                (else ;min wins at this leaf
+                 (send node set-minmax 1))))
+          (else ;set minmax value to min/max of child depending on turn
+           (for ((child (send node get-children)))
+             (cond ((= turn 1) ;max wins at this leaf
+                 (set! max-value (max max-value (send child get-minmax)))
+                 (send node set-minmax max-value))
+                (else ;min wins at this leaf
+                 (set! min-value (min min-value (send child get-minmax)))
+                 (send node set-minmax min-value))))))))
+    
 
 (define build-tree
   (lambda (game)
@@ -148,6 +173,16 @@
 
 ;(Nim 7)
 (define root (build-tree 7))
+(minimaxDFS root 0)
+(displayln (send root get-board))
+(displayln (send root get-minmax))
 
     (for ((child (send root get-children)))
-      (displayln (send child get-board)))
+      (displayln (send child get-board))
+      (displayln (send child get-minmax))
+      (for ((c (send child get-children)))
+              (displayln (send c get-board))
+        (displayln (send c get-minmax))
+      (for ((d (send c get-children)))
+              (displayln (send d get-board))
+        (displayln (send d get-minmax)))))
