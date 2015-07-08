@@ -24,6 +24,12 @@
     (define/public (get-minmax)
     minmax)
     
+    (define/public (get-children)
+    children)
+    
+    (define/public (set-children c)
+    (set! children c))   
+    
     (define/public (set-board newboard)
     (set! board newboard))
     
@@ -83,7 +89,7 @@
                (set! children (append (list child) children))))))
     
     (cond(has-children
-          (set! parent (append (list parent) (list children)))))
+          (send parent set-children children)))
     parent))
 
 
@@ -141,4 +147,7 @@
        (displayln "Player Wins!")))))
 
 ;(Nim 7)
-(displayln (build-tree 3))
+(define root (build-tree 7))
+
+    (for ((child (send root get-children)))
+      (displayln (send child get-board)))
