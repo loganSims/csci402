@@ -134,13 +134,14 @@
 ;computer is playing as min or max
 (define make-move
   (lambda (root me)
-    (define can-win #f)
+    (define force-win #f)
     (for ((child (send root get-children)))
       (cond((equal? me (send child get-minmax))
             (set! root child)
-            (set! can-win #t))))
+            (set! force-win #t))))
     
-    ;(cond ((not can-win) ;computer cannot force win
+    (cond ((not force-win) ;computer cannot force win
+           (set! root (car (send root get-children)))))
     
     root))
 
@@ -189,7 +190,7 @@
 (define Nim
   (lambda (x)
 
-    (define turn 0)    
+    (define turn 0)
     
     (define root (build-tree x))
     (minimaxDFS root 0)
@@ -197,42 +198,19 @@
     (let loop ()
       (displayln (send root get-board))
       (when (check-winner (send root get-board) turn)
-        (cond ((= turn 0)
+        (cond ((= turn 1)
                (begin
                (displayln "computer turn")
                (set! root (make-move root turn))
                ))
-              ((= turn 1)
+              ((= turn 0)
                (begin
                (set! root (get-move root)))))
         (set! turn (change-turn turn))
         (loop)))
-(cond ((= turn 1)
+(cond ((= turn 0)
        (displayln "Computer Wins!"))
       (else
        (displayln "Player Wins!")))))
 
-;(Nim 7)
-
-
-
-;;;print test stuff;;;;;;;;;;;;;;;
-
-;(define root (build-tree 7))
-;(minimaxDFS root 0)
-
-
-;(displayln (send root get-board))
-;(displayln (send root get-minmax))
-;    (for ((child (send root get-children)))
-;      (displayln (send child get-board))
-;      (displayln (send child get-minmax)))
-;    (for ((child (send root get-children)))
-;      (for ((c (send child get-children)))
-;              (displayln (send c get-board))
-;        (displayln (send c get-minmax))))
-;        (for ((child (send root get-children)))
-;      (for ((c (send child get-children)))
-;      (for ((d (send c get-children)))
- ;             (displayln (send d get-board))
- ;       (displayln (send d get-minmax)))))
+(Nim 10)
