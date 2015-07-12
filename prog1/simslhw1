@@ -1,0 +1,240 @@
+#lang racket
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Logan Sims
+;; CSCI 402
+;; Summer 2015     
+;;
+;;
+;; Plays a game of nim with the user.
+;; Applies minimax alg to try and force win
+;;
+;; This porgram use "board" and "gameboard" to
+;; represent the state of the stacks of coins at
+;; a given time
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;  Class that defines the nodes in the minimax tree
+;
+;   A node contains 3 fields:
+;     1. The set up of the gameboard at a given time,
+;     2. The minimax value of that board
+;     3. A list of all the children of a node;
+;        children are nodes that hold gameboards that
+;        can be created by performing value moves on the
+;        board field
+(define node% 
+  (class object%
+    (init b)               
+  
+    (define board b)
+    (define minmax -1)
+    (define children '())    
+    
+    (define/public (get-board)
+    board)
+    
+    (define/public (get-minmax)
+    minmax)
+    
+    (define/public (get-children)
+    children)
+    
+    (define/public (set-children c)
+    (set! children c))   
+    
+    (define/public (set-board newboard)
+    (set! board newboard))
+    
+    (define/public (set-minmax value)
+    (set! minmax value))
+     
+    (super-new)))
+
+
+;checks for a winner
+(define check-winner
+   (lambda (gameboard player)
+     (define game-on #f)
+     (for ((i gameboard))
+           (cond ((> i 2)
+                  (set! game-on #t))))
+     game-on))
+
+;flips turns between player 0 and 1
+(define change-turn
+  (lambda (turn)
+    (cond ((= turn 1)
+           0)
+          ((= turn 0)
+           1))))
+
+; Assigns minimax values based on winnners
+; at leaf nodes. 
+;
+; Performs a DFS to find these values
+(define minimaxDFS
+  (lambda (node turn)
+
+    (define leaf #t)
+    (define min-value 2)
+    (define max-value -2)
+    
+    (for ((child (send node get-children)))
+      (set! leaf #f)
+      (minimaxDFS child (change-turn turn)))
+    
+    (cond (leaf
+          (cond ((= turn 1) ;max wins at this leaf
+                 (send node set-minmax 0))
+                (else ;min wins at this leaf
+                 (send node set-minmax 1))))
+          (else ;set minmax value to min/max of child depending on turn
+           (for ((child (send node get-children)))
+             (cond ((= turn 1) ;max wins at this leaf
+                 (set! max-value (max max-value (send child get-minmax)))
+                 (send node set-minmax max-value))
+                (else ;min wins at this leaf
+                 (set! min-value (min min-value (send child get-minmax)))
+                 (send node set-minmax min-value))))))))
+    
+;builds the tree
+(define build-tree
+  (lambda (game)
+  ;set root to node with gameboard = size
+    (define root (new node% (b (list game))))
+    (define tree (get-children root))
+    tree))
+
+
+; Recursivly builds the tree by created all the possible
+; children at a node.
+;
+; These children represent states of the gameboard that
+; different moves can create
+(define get-children
+  (lambda (parent)
+    
+    (define test-board (remove-duplicates (send parent get-board)))
+    (define children '())
+    (define has-children #f)
+    
+    (for ((i test-board))
+      (cond ((> i 2) ;this pile can be split to make new gameboards (nodes)
+             (set! has-children #t)
+             (define moves (range 1 (ceiling (/ i 2)) )) 
+             (for ((j moves))
+               (define child (new node% (b (send parent get-board))))
+               ;perform move on test nodes.
+               (send child set-board (remove i (send child get-board)))
+               (send child set-board (sort (append (send child get-board) (list j (- i j)) ) >))  
+               (set! child (get-children child))
+               (set! children (append (list child) children) )))))
+    
+    (cond(has-children
+          (send parent set-children children)))
+    parent))
+
+
+;  Makes move based on if computer is
+;  min or max.
+;
+;  me is either 0 or 1 and defines if
+;  computer is playing as min or max
+(define make-move
+  (lambda (root me)
+    (define force-win #f)
+    (for ((child (send root get-children)))
+      (cond((equal? me (send child get-minmax))
+            (set! root child)
+            (set! force-win #t))))
+    
+    ;If computer cannot force win
+    ;it picks the car of the children list.
+    (cond ((not force-win) 
+           (set! root (car (send root get-children)))))
+    
+    root))
+
+; Used in get-move to set the players move 
+; to the root of the tree.
+;
+; finds the child gameboard that the player 
+; changed to with thier move
+(define change-root
+  (lambda (root board)
+    (for ((child (send root get-children)))
+      (cond((equal? board (send child get-board))
+            (set! root child))))
+    root))
+
+; Gets and validates a move from a player. As a player takes turns
+; the root of the minimax tree will be moved to the node that
+; represents the choice the player made.
+(define get-move
+  (lambda (root)
+    (displayln "Make a move. (ex. [pile] [sub-pile 1] [sub-pile 2])")
+    (define getting-move #t)
+    (define gameboard (send root get-board))
+    (let loop ()
+      (when getting-move
+        (define move (read-line))
+        (define movelst (string-split move))
+        ;check if move was valid
+        (cond ((and (and (member (string->number (car movelst)) gameboard) 
+                         (equal? 3 (length movelst)))
+                    (and (not (equal? (string->number (third movelst))(string->number(second movelst)))) 
+                         (equal? (+(string->number(second movelst))(string->number(third movelst))) 
+                                 (string->number(car movelst)))))
+               ;set the gameboard to the players move
+               (set! gameboard (remove (string->number (car movelst)) gameboard))
+               (set! gameboard 
+                     (sort (append (list (string->number(second movelst))(string->number(third movelst))) gameboard) >))
+               ;move the root of the tree to the players move
+               (set! root (change-root root gameboard))
+               (set! getting-move #f))
+              ((equal? move "show") (displayln gameboard))
+              (else  (displayln "please enter a correct move. (ex. [pile] [split 1] [split 2])")))
+        (loop)))
+    root))
+    
+;Main function
+(define Nim
+  (lambda (x)
+
+    ;min always starts game
+    (define turn 0) 
+    
+    (define min 0)
+    (define max 1)
+
+    ;to change who goes first swap max and min.
+    (define computer max)
+    (define player min)
+    
+    ;set up minimax tree for computer to use
+    (define root (build-tree x))
+    (minimaxDFS root 0)
+    
+    ;main game loop, swaps turns, checking for winner after each turn
+    (let loop ()
+      (displayln (send root get-board))
+      (when (check-winner (send root get-board) turn)
+        (cond ((= turn computer)
+               (begin
+               (displayln "computer turn")
+               (set! root (make-move root turn))
+               ))
+              ((= turn player)
+               (begin
+               (set! root (get-move root)))))
+        (set! turn (change-turn turn))
+        (loop)))
+    
+;after main loop check who the winner was
+(cond ((= turn player)
+       (displayln "Computer Wins!"))
+      (else
+       (displayln "Player Wins!")))))
