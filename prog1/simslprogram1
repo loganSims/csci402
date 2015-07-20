@@ -7,9 +7,9 @@
 ;;
 ;;
 ;; Plays a game of nim with the user.
-;; Applies minimax alg to try and force win
+;; Applies minimax algorithm to try and force win
 ;;
-;; This porgram use "board" and "gameboard" to
+;; This program use "board" and "gameboard" to
 ;; represent the state of the stacks of coins at
 ;; a given time
 ;;
@@ -71,7 +71,7 @@
           ((= turn 0)
            1))))
 
-; Assigns minimax values based on winnners
+; Assigns minimax values based on winners
 ; at leaf nodes. 
 ;
 ; Performs a DFS to find these values
@@ -109,7 +109,7 @@
     tree))
 
 
-; Recursivly builds the tree by created all the possible
+; Recursively builds the tree by created all the possible
 ; children at a node.
 ;
 ; These children represent states of the gameboard that
@@ -146,6 +146,7 @@
 (define make-move
   (lambda (root me)
     (define force-win #f)
+       
     (for ((child (send root get-children)))
       (cond((equal? me (send child get-minmax))
             (set! root child)
@@ -162,7 +163,7 @@
 ; to the root of the tree.
 ;
 ; finds the child gameboard that the player 
-; changed to with thier move
+; changed to with their move
 (define change-root
   (lambda (root board)
     (for ((child (send root get-children)))
@@ -211,8 +212,8 @@
     (define max 1)
 
     ;to change who goes first swap max and min.
-    (define computer max)
-    (define player min)
+    (define computer min)
+    (define player max)
     
     ;set up minimax tree for computer to use
     (define root (build-tree x))
@@ -224,7 +225,7 @@
       (when (check-winner (send root get-board) turn)
         (cond ((= turn computer)
                (begin
-               (displayln "computer turn")
+               (displayln "computer turn...")
                (set! root (make-move root turn))
                ))
               ((= turn player)

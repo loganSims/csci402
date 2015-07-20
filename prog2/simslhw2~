@@ -1,0 +1,26 @@
+#lang racket
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Logan Sims
+;; CSCI 402
+;; Summer 2015     
+;; Program 2
+;; JHusbands
+;;
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    
+;Main function
+(define Nim
+  (lambda (x)
+
+    ;min always starts game
+    (define turn 0) 
+    
+    (define min 0)
+    (define max 1)
+
+    ;to change who goes first swap max and min.
+    (define computer min)
+    (define player max)))
