@@ -1,0 +1,8 @@
+#lang racket
+
+
+(define LOC '())
+
+(define SET-ROBBIE-LOCATION
+  (lambda (location)
+    (set! LOC location)))
