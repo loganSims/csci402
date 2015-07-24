@@ -13,35 +13,36 @@
 
 (define choices
   (lambda (location)
+    (define choices '())
     (for ((room-data rooms))
       (cond ((equal? location (car room-data))
-             (displayln (cdr room-data))
-             )))))
+             (set! choices (cdr room-data))
+             )))
+      choices))
 
 (define look
   (lambda (direction room)
-    (define found #f)
+    (define dest 'NIL)
     (for ((room-data rooms))
       (cond ((equal? room (car room-data))
              (for ((rooms-next-to (cdr room-data)))
                (cond ((equal? direction (car rooms-next-to))
-                      (displayln (second rooms-next-to))
-                      (set! found #t)))))))
-    (cond ((not found)
-           (displayln 'NIL)))))
+                      (second rooms-next-to)
+                      (set! dest (second rooms-next-to))))))))
+    dest))
 
 (define where
   (lambda ()
-    (cond ((regexp-match "-stairs" (symbol->string (car loc)))
+    (cond ((regexp-match "-stairs" (symbol->string loc))
            (display "Robbie is on the ")
            (displayln (symbol->string (car loc))))
-          ((regexp-match "stairs" (symbol->string (car loc)))
+          ((regexp-match "stairs" (symbol->string loc))
            (display "Robbie is in the ")
            (displayln (symbol->string (car loc))))
           (else  
            (cond((down-stairs? loc)
                  (display "Robbie is downstairs in the ")
-                 (displayln (symbol->string (car loc)))
+                 (displayln (symbol->string loc))
                  )
                 (else
                 (display "Robbie is upstairs in the ")
@@ -53,7 +54,7 @@
 (define down-stairs?
   (lambda (location)
     (define downstairs '())
-    (for ((next-location (cdr location)))
+    (for ((next-location (choices location)))
       (cond ((equal? downstairs '())
              (cond ((regexp-match "downstairs" (symbol->string (second next-location)))
                     (set! downstairs #t))
@@ -67,11 +68,51 @@
     downstairs))
 
 
-;TEST
-(set! loc (list-ref rooms 8))
+(define move
+  (lambda (direction)
+    (define dest '(Ouch! Robbie hit the wall))
+    (cond ((not (equal? (look direction loc) 'NIL))
+           (for ((room rooms))
+             (cond ((equal? (car room) (look direction loc))
+                    (set-robbie-location (car room))
+                    (set! dest (where)))))))
+    dest))
 
+(define traverse
+  (lambda (src dest)
+    (displayln "traversing..")
+    
+    ))
+
+
+
+(set-robbie-location 'kitchen)
+(traverse loc 'library)
+
+
+
+
+
+
+
+
+
+
+
+;TEST
+;(set-robbie-location 'kitchen)
+
+;(displayln ">(where)")
 ;(where)
-;(choices 'living-room)
-;(look 'north 'pantry)
-;(look 'west 'pantry)
-;(look 'south 'pantry)
+;(displayln ">(choices loc)")
+;(choices loc)
+;(displayln ">(move 'north)")
+;(move 'north)
+;(displayln ">(move 'west)")
+;(move 'west)
+;(displayln ">(choices loc)")
+;(choices loc)
+;(displayln ">(move 'south)")
+;(move 'south)
+;(displayln "(where)")
+;(where)
