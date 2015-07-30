@@ -30,5 +30,3 @@
      (south back-stairs))
     )
   )
-
-

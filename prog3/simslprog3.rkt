@@ -1,7 +1,30 @@
 #lang racket
 (require racket/include)
 (include "Program-3-data.rkt")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  Logan Sims
+;;  8/3/2015
+;;  CSCI 402
+;;  Program 3: Robbie
+;;
+;;  Reads in an external file for data about a set 
+;;  of locations. The file must contain only the
+;;  set and it must be named "rooms". Also there
+;;  must be no "#lang racket" at the heading of t
+;;  the file.
+;;
+;;  This program holds functions that allow
+;;  the user to move "Robbie" around the room.
+;;  It also has a function called traverse that
+;;  when given two locations will find a path
+;;  form one to the other.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Node object used in traverse. 
+;; Main purpose is for dispalying
+;; path after it is found.
 (define node% 
   (class object%
     (init r)               
@@ -20,15 +43,17 @@
     (set! direction p))    
     (super-new)))
 
-;global for robbie's location
+;; global for robbie's location
 (define loc '())
 
-;Moves Robbie to PLACE by setting
-;the variable LOC.
+;; Moves Robbie to PLACE by setting
+;; the variable LOC.
 (define set-robbie-location 
   (lambda (location)
     (set! loc location)))
 
+;; Given a location returns the 
+;; possible locations Robbie can move to.
 (define choices
   (lambda (location)
     (define choices '())
@@ -38,6 +63,10 @@
              )))
       choices))
 
+;; Given a direction (north, south, east west) and
+;; a room, this function tells what room is in the 
+;; given direction from the room. returns NIL
+;; if there is no room.
 (define look
   (lambda (direction room)
     (define dest 'NIL)
@@ -49,6 +78,10 @@
                       (set! dest (second rooms-next-to))))))))
     dest))
 
+;; Displays Robbie's current location.
+;; 
+;; Uses the function down-stairs? to determine the 
+;; floor Robbie is on.
 (define where
   (lambda ()
     (cond ((regexp-match "-stairs" (symbol->string loc))
@@ -67,8 +100,12 @@
                  (displayln (symbol->string loc))
                  ))))))
 
-;determines if a location is down-stairs.
-;Used by Where for printing location
+;;  Determines if a location is down-stairs.
+;;  Used by Where for printing location
+;;
+;;  The function performs a DFS of locations, ignoring stairs, and looks
+;;  for the regular expressions "downstairs" and "upstairs" to determine 
+;;  Robbies floor.
 (define down-stairs?
   (lambda (location)
     (define downstairs '())
@@ -85,7 +122,9 @@
                              (set! downstairs (down-stairs? room))))))))))
     downstairs))
 
-
+;;  Changes Robbies location to the room in the given 
+;;  direction. If there is no room in that direction
+;;  displays message stating Robbie hit the wall.
 (define move
   (lambda (direction)
     (define moved #f)
@@ -98,8 +137,8 @@
                     (set! moved #t))))))
     dest))
 
-; Uses BFS to find shortest path from src to dest
-;
+;; Uses a very standard BFS to find 
+;; the shortest path from src to dest.
 (define traverse
   (lambda (src dest)
     (define root (new node% (r src)))
@@ -128,8 +167,8 @@
             (loop))))
     (print-path solution)))
 
-;Given a node the contains the dest, recursivly
-;travels up parents to print the path from src to dest.
+;; Given a node the contains the dest, recursivly
+;; travels up parents to print the path from src to dest.
 (define print-path
   (lambda (node)
   (cond ((not(equal? (send node get-parent) '()))
@@ -139,15 +178,3 @@
          (display (send node get-direction))
          (display " to ")
          (displayln (send node get-room))))))
-
-
-;TESTING;;;;;;;;;;;;;;;;;;;
-
-(set-robbie-location 'kitchen)
-(traverse loc 'library)
-
-(move 'south)
-(move 'west)
-(move 'west)
-(move 'north)
-(move 'north)
