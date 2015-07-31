@@ -8,11 +8,10 @@
 ;;  CSCI 402
 ;;  Program 3: Robbie
 ;;
-;;  Reads in an external file for data about a set 
+;;  imports an external file for data about a set 
 ;;  of locations. The file must contain only the
-;;  set and it must be named "rooms". Also there
-;;  must be no "#lang racket" at the heading of t
-;;  the file.
+;;  set and it must be named "rooms". Also "#lang racket" 
+;;  must not be at the heading of the file.
 ;;
 ;;  This program holds functions that allow
 ;;  the user to move "Robbie" around the room.
@@ -137,19 +136,20 @@
                     (set! moved #t))))))
     dest))
 
-;; Uses a very standard BFS to find 
+;; Uses a standard BFS to find 
 ;; the shortest path from src to dest.
+;; Updates Robbies location.
 (define traverse
   (lambda (src dest)
     (define root (new node% (r src)))
     (define currNode root)
     (define newNode '())    
     (define v (list src))
-
     (define Q '())
     (define solution '())
     (set! Q (append (list root) Q))
     
+    ;Main loop for BFS with a Queue
     (let loop ()
       (cond((not (empty? Q))
             (set! currNode (car Q))
@@ -165,7 +165,8 @@
                             (set! solution newNode)
                             (set! Q '()))))))
             (loop))))
-    (print-path solution)))
+    (print-path solution)
+    (set-robbie-location (send solution get-room))))
 
 ;; Given a node the contains the dest, recursivly
 ;; travels up parents to print the path from src to dest.
@@ -178,3 +179,4 @@
          (display (send node get-direction))
          (display " to ")
          (displayln (send node get-room))))))
+
